@@ -4,13 +4,13 @@
 
 </div>
 
-## FlClash
+## Clash Party Mobile
 
-[![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 
-[![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
+**Unofficial mobile client for [Clash Party](https://github.com/mihomo-party-org/clash-party)**
 
-A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
+A mobile proxy client based on FlClash and ClashMeta, bringing Clash Party experience to Android devices with UI improvements and bug fixes.
 
 on Desktop:
 <p style="text-align: center;">
