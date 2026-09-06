@@ -55,7 +55,7 @@ const commonDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';
-const GEOIP = 'GEOIP.dat';
+const GEOIP = 'GeoIP.dat';
 const GEOSITE = 'GEOSITE.dat';
 
 /// 随安装包携带、首次启动时拷进工作目录的 geo 数据。
