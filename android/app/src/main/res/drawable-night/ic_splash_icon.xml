@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  闪屏上显示的那只猫（深色模式）。
+
+  和浅色版唯一的区别：**把标记染成白色**。ic_mark 是一个蓝色剪影，深色
+  模式下闪屏是黑底，不染色就等于什么都看不见——这正是之前要在它背后垫一块白圆
+  盘的原因，而那块圆盘才是用户看到的「白图标」。
+
+  `android:tint` 作用在 bitmap 上从 API 21 就支持，本项目 minSdk 24，安全。
+  外面仍然套 inset 收 24dp，理由见浅色版。
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="24dp">
+    <bitmap
+        android:src="@drawable/ic_mark"
+        android:tint="#FFFFFF" />
+</inset>

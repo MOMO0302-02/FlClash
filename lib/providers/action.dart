@@ -1,0 +1,31 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:clash_party/common/common.dart';
+import 'package:clash_party/core/core.dart';
+import 'package:clash_party/database/database.dart';
+import 'package:clash_party/enum/enum.dart';
+import 'package:clash_party/models/models.dart';
+import 'package:clash_party/plugins/app.dart';
+import 'package:clash_party/plugins/service.dart';
+import 'package:clash_party/providers/providers.dart';
+import 'package:clash_party/providers/actions/system_exit.dart';
+import 'package:clash_party/state.dart';
+import 'package:clash_party/views/profiles/profiles.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' show basename;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+part 'actions/common.dart';
+part 'actions/setup.dart';
+part 'actions/backup.dart';
+part 'actions/core.dart';
+part 'actions/system.dart';
+part 'actions/store.dart';
+part 'actions/theme.dart';
+part 'actions/proxies.dart';
+part 'actions/profiles.dart';
+part 'actions/geo_resource.dart';
+part 'generated/action.g.dart';

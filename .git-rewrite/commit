@@ -1,0 +1,8 @@
+tree 95b2ede84c9b3544fbe1f1e685984fb22bc8e71b
+parent 442c32b6ebcba63be30012fd194a5729af5a91e7
+author chen08209 <chen08209@gmail.com> 1714742902 +0800
+committer chen08209 <chen08209@gmail.com> 1714742921 +0800
+
+Add ProxyProvider
+
+(cherry picked from commit b3a5f74df8a9b42efaa2deb290c32075ce831cb1)

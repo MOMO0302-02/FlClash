@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 与桌面版一致：深色猫配浅底。蓝底会把深色的猫压得看不清。 -->
+    <color name="ic_launcher_background">#006FEE</color>
+</resources>

@@ -1,0 +1,128 @@
+import 'dart:async';
+
+import 'package:clash_party/common/common.dart';
+import 'package:clash_party/enum/enum.dart';
+import 'package:clash_party/plugins/app.dart';
+import 'package:clash_party/providers/providers.dart';
+import 'package:clash_party/state.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wifi_ssid/wifi_ssid_manager.dart';
+
+enum LocationPermissionFollowUp { none, showDeniedMessage, openSettings }
+
+LocationPermissionFollowUp getLocationPermissionFollowUp(
+  WifiSsidPermission permission,
+) {
+  return switch (permission) {
+    WifiSsidPermission.granted => LocationPermissionFollowUp.none,
+    WifiSsidPermission.denied => LocationPermissionFollowUp.showDeniedMessage,
+    WifiSsidPermission.permanentlyDenied =>
+      LocationPermissionFollowUp.openSettings,
+  };
+}
+
+class Permissions {
+  static Permissions? _instance;
+
+  Permissions._internal({bool Function()? supportsLocationPermissions})
+    : _supportsLocationPermissions =
+          supportsLocationPermissions ??
+          // The Windows plugin implements getSsid/checkPermission/
+          // requestPermission too, so leaving it out disables the whole
+          // per-SSID feature there.
+          (() => system.isAndroid || system.isMacOS || system.isWindows);
+
+  factory Permissions() {
+    _instance ??= Permissions._internal();
+    return _instance!;
+  }
+
+  @visibleForTesting
+  factory Permissions.test({required bool supportsLocationPermissions}) {
+    return Permissions._internal(
+      supportsLocationPermissions: () => supportsLocationPermissions,
+    );
+  }
+
+  final bool Function() _supportsLocationPermissions;
+
+  bool _isRequestingLocation = false;
+  bool needWaitingBatteryOptimizationSettings = false;
+
+  void check() {
+    checkLocationPermissions();
+    checkBatteryOptimizationDisable();
+  }
+
+  Future<void> checkBatteryOptimizationDisable() async {
+    await _checkBatteryOptimizationDisable();
+  }
+
+  Future<void> _checkBatteryOptimizationDisable() async {
+    const tag = LoadingTag.batteryOptimization;
+    try {
+      if (needWaitingBatteryOptimizationSettings) {
+        globalState.container.read(loadingProvider(tag).notifier).value = true;
+      }
+      globalState.container
+          .read(batteryOptimizationDisableProvider.notifier)
+          .value = await retry<bool>(
+        task: () async {
+          return await app?.isBatteryOptimizationDisabled() ?? false;
+        },
+        retryIf: (res) => res == false,
+        delay: const Duration(milliseconds: 500),
+        maxAttempts: needWaitingBatteryOptimizationSettings ? 5 : 1,
+      );
+    } finally {
+      globalState.container.read(loadingProvider(tag).notifier).value = false;
+      needWaitingBatteryOptimizationSettings = false;
+    }
+  }
+
+  Future<void> checkLocationPermissions() async {
+    if (!_supportsLocationPermissions()) {
+      return;
+    }
+    final res = await WifiSsidManager.instance.checkPermission();
+    final current = globalState.container.read(locationPermissionsProvider);
+    if (res == WifiSsidPermission.granted ||
+        current != WifiSsidPermission.permanentlyDenied) {
+      globalState.container.read(locationPermissionsProvider.notifier).value =
+          res;
+    }
+    final needRequestPermission = globalState.container.read(
+      excludeSSIDsProvider.select((state) => state.isNotEmpty),
+    );
+    if (res == WifiSsidPermission.denied &&
+        needRequestPermission &&
+        !_isRequestingLocation) {
+      try {
+        _isRequestingLocation = true;
+        final res = await WifiSsidManager.instance.requestPermission();
+        globalState.container.read(locationPermissionsProvider.notifier).value =
+            res;
+        if (res == WifiSsidPermission.granted) {
+          try {
+            final ssid = await WifiSsidManager.instance.getSsid();
+            globalState.container.read(currentSSIDProvider.notifier).value =
+                ssid;
+          } catch (e) {
+            // getSsid is a platform channel call and throws on a platform
+            // error or a missing implementation; keep the last known SSID
+            // rather than letting that escape the permission flow.
+            commonPrint.log(
+              'get Wi-Fi SSID failed: $e',
+              logLevel: LogLevel.warning,
+            );
+          }
+        }
+      } finally {
+        _isRequestingLocation = false;
+      }
+    }
+  }
+}
+
+final permissions = Permissions();

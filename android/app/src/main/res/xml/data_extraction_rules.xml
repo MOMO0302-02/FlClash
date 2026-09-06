@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  应用数据不参与系统备份与换机迁移。
+
+  为什么：这个应用的数据目录里放的是订阅地址（database.sqlite 的 profiles.url，
+  里面带机场 token）、订阅正文与生成的运行配置（files/profiles/*.yaml、
+  files/config.yaml，里面是节点服务器和密码），以及 WebDAV 账号
+  （shared_prefs/FlutterSharedPreferences.xml）。系统备份会把这些原样打成
+  一个**不加密**的 tar 交给云端或新手机。
+
+  AndroidManifest 里的 android:allowBackup="false" 只挡住云备份；
+  Android 12(API 31) 起的「换机直传」(device transfer) 需要在这里单独排除，
+  两者缺一不可。
+
+  用户要迁移数据，走应用自带的备份/恢复（本地 zip 或 WebDAV），那条路是用户
+  主动发起、目的地由用户自己指定的。
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+        <!--
+          闪屏跟随系统深浅色（底色见 values/colors.xml 与 values-night/colors.xml）。
+
+          **不再设 windowSplashScreenIconBackgroundColor。** 原先是黑底 + 一块近白色
+          的圆底 + 深色的猫——因为猫本身是深板岩灰，直接放黑底上看不见。代价是启动时
+          屏幕正中一个很扎眼的白圆盘，用户看到的就是「背景是黑的、图标是白的」。
+          正确解法是让底色和猫的明暗相配（深色模式下把猫染白，见
+          drawable-night/ic_splash_icon.xml），而不是给猫垫一块和背景冲突的板子。
+        -->
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/ic_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/NormalTheme</item>
+    </style>
+</resources>

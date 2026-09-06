@@ -1,0 +1,248 @@
+import 'dart:io';
+
+import 'package:clash_party/common/common.dart';
+import 'package:clash_party/enum/enum.dart';
+import 'package:clash_party/models/models.dart';
+import 'package:clash_party/pages/editor.dart';
+import 'package:clash_party/providers/app.dart';
+import 'package:clash_party/providers/database.dart';
+import 'package:clash_party/state.dart';
+import 'package:clash_party/widgets/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class ScriptsView extends ConsumerStatefulWidget {
+  const ScriptsView({super.key});
+
+  @override
+  ConsumerState<ScriptsView> createState() => _ScriptsViewState();
+}
+
+class _ScriptsViewState extends ConsumerState<ScriptsView> {
+  final _key = utils.id;
+
+  Future<void> _handleDelScript(int id) async {
+    final appLocalizations = context.appLocalizations;
+    final res = await globalState.showMessage(
+      message: TextSpan(
+        text: appLocalizations.deleteTip(appLocalizations.script),
+      ),
+    );
+    if (res != true) {
+      return;
+    }
+    ref.read(scriptsProvider.notifier).del(id);
+    ref.read(itemProvider(_key).notifier).value = null;
+    _clearEffect(id);
+  }
+
+  Future<void> _clearEffect(int id) async {
+    final path = await appPath.getScriptPath(id.toString());
+    await File(path).safeDelete();
+  }
+
+  void _handleSelected(int id) {
+    ref.read(itemProvider(_key).notifier).update((value) {
+      if (value == id) {
+        return null;
+      }
+      return id;
+    });
+  }
+
+  Widget _buildContent(List<Script> scripts, int? selectedScriptId) {
+    final appLocalizations = context.appLocalizations;
+    if (scripts.isEmpty) {
+      // 同 rules：光写「暂无脚本」等于把人晾着，说清脚本是干嘛的并直接给入口。
+      return NullStatus(
+        illustration: const ScriptEmptyIllustration(),
+        label: appLocalizations.nullTip(appLocalizations.script),
+        description: appLocalizations.scriptModeDesc,
+        action: FilledButton.tonal(
+          onPressed: () {
+            _handleToEditor();
+          },
+          child: Text(appLocalizations.add),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      itemCount: scripts.length,
+      itemBuilder: (_, index) {
+        final script = scripts[index];
+        return CommonSelectedListItem(
+          isSelected: selectedScriptId == script.id,
+          title: Text(
+            script.label,
+            style: context.textTheme.bodyLarge,
+            maxLines: 3,
+          ),
+          onSelected: () {
+            _handleSelected(script.id);
+          },
+          onPressed: () {
+            _handleSelected(script.id);
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _handleEditorSave(
+    BuildContext _,
+    String title,
+    String content, {
+    Script? script,
+  }) async {
+    final appLocalizations = context.appLocalizations;
+    Script newScript =
+        (script?.copyWith(label: title) ?? Script.create(label: title));
+    if (newScript.label.isEmpty) {
+      final res = await globalState.showCommonDialog<String>(
+        child: InputDialog(
+          title: appLocalizations.save,
+          value: '',
+          hintText: appLocalizations.pleaseEnterScriptName,
+          inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return appLocalizations.emptyTip(appLocalizations.name);
+            }
+            if (value != script?.label) {
+              final isExits = ref.read(scriptsProvider.notifier).isExits(value);
+              if (isExits) {
+                return appLocalizations.existsTip(appLocalizations.name);
+              }
+            }
+            return null;
+          },
+        ),
+      );
+      if (res == null || res.isEmpty) {
+        return;
+      }
+      newScript = newScript.copyWith(label: res);
+    }
+    if (newScript.label != script?.label) {
+      final isExits = ref
+          .read(scriptsProvider.notifier)
+          .isExits(newScript.label);
+      if (isExits) {
+        globalState.showMessage(
+          message: TextSpan(
+            text: appLocalizations.existsTip(appLocalizations.name),
+          ),
+        );
+        return;
+      }
+    }
+    // Write the file only after every early return, otherwise an aborted
+    // save leaves an untracked script file behind.
+    newScript = await newScript.save(content);
+    ref.read(scriptsProvider.notifier).put(newScript);
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<bool> _handleEditorPop(
+    BuildContext _,
+    String title,
+    String content,
+    String raw, {
+    Script? script,
+  }) async {
+    final appLocalizations = context.appLocalizations;
+    // 标题也要比：脚本的名字是可以改的，只比正文的话「只改了个名就返回」会被
+    // 当成没有改动直接放行，改名被静默丢掉，连个提示都没有。
+    final unchanged = content == raw && title == (script?.label ?? '');
+    if (unchanged) {
+      return true;
+    }
+    final res = await globalState.showMessage(
+      message: TextSpan(text: appLocalizations.saveChanges),
+    );
+    if (res == true && mounted) {
+      _handleEditorSave(context, title, content, script: script);
+    } else {
+      return true;
+    }
+    return false;
+  }
+
+  void _handleToEditor([int? id]) async {
+    final script = await ref.read(scriptProvider(id).future);
+    final title = script?.label ?? '';
+    final raw = (await script?.content) ?? scriptTemplate;
+    if (!mounted) {
+      return;
+    }
+    BaseNavigator.push(
+      context,
+      EditorPage(
+        titleEditable: true,
+        title: title,
+        supportRemoteDownload: true,
+        onSave: (context, title, content) {
+          _handleEditorSave(context, title, content, script: script);
+        },
+        onPop: (context, title, content) {
+          return _handleEditorPop(context, title, content, raw, script: script);
+        },
+        languages: const [Language.javaScript],
+        content: raw,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final scripts = ref.watch(scriptsProvider).value ?? [];
+    final selectedScriptId = ref.watch(itemProvider(_key));
+    return CommonPopScope(
+      onPop: (_) {
+        if (selectedScriptId != null) {
+          ref.read(itemProvider(_key).notifier).value = null;
+          return false;
+        }
+        Navigator.of(context).pop();
+        return false;
+      },
+      child: CommonScaffold(
+        actions: [
+          if (selectedScriptId != null) ...[
+            CommonMinIconButtonTheme(
+              child: IconButton.filledTonal(
+                onPressed: () {
+                  _handleDelScript(selectedScriptId);
+                },
+                icon: const Icon(Icons.delete),
+              ),
+            ),
+            const SizedBox(width: 2),
+          ],
+          CommonMinFilledButtonTheme(
+            child: selectedScriptId != null
+                ? FilledButton(
+                    onPressed: () {
+                      _handleToEditor(selectedScriptId);
+                    },
+                    child: Text(appLocalizations.edit),
+                  )
+                : FilledButton.tonal(
+                    onPressed: () {
+                      _handleToEditor();
+                    },
+                    child: Text(appLocalizations.add),
+                  ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        body: _buildContent(scripts, selectedScriptId),
+        title: appLocalizations.script,
+      ),
+    );
+  }
+}

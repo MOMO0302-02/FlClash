@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      启动闪屏与窗口底色（深色模式）。
+
+      取值＝应用内深色模式的页面底色 #000000（HeroUI dark 的 background，和桌面
+      端一致）。配套的猫在 drawable-night/ic_splash_icon.xml 里染成白色，所以不
+      需要再给它垫圆底。
+    -->
+    <color name="splash_background">#000000</color>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  长按启动图标弹出的快捷方式文案。
+
+  **这些必须是安卓资源、不能走应用内的多语言（arb）**：静态快捷方式是系统在
+  安装时就从清单里读出来的，那会儿应用一次都没跑过，Flutter 的翻译还不存在。
+  代价是它跟随**系统语言**，而不是设置里选的应用语言——两者不一致时，长按菜单
+  会是系统那一种。
+
+  shortcutShortLabel 是长按菜单里真正显示的那行，安卓建议 10 个字符以内；
+  shortcutLongLabel 只在空间够（比如把快捷方式拖到桌面）时才用。
+-->
+<resources>
+    <string name="shortcut_toggle_short">Toggle</string>
+    <string name="shortcut_toggle_long">Toggle VPN</string>
+    <string name="shortcut_start_short">Start</string>
+    <string name="shortcut_start_long">Start VPN</string>
+    <string name="shortcut_stop_short">Stop</string>
+    <string name="shortcut_stop_long">Stop VPN</string>
+</resources>

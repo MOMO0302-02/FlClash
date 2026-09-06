@@ -1,0 +1,275 @@
+import 'package:clash_party/common/task.dart';
+import 'package:clash_party/enum/enum.dart';
+import 'package:clash_party/models/models.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart';
+import 'package:yaml/yaml.dart';
+
+int _double(int value) => value * 2;
+
+void main() {
+  group('resolveArchiveEntryPath', () {
+    final root = join(rootPrefix(current), 'restore');
+
+    test('accepts a plain file name', () {
+      expect(
+        resolveArchiveEntryPath(root, 'config.json'),
+        join(root, 'config.json'),
+      );
+    });
+
+    test('accepts a nested entry', () {
+      expect(
+        resolveArchiveEntryPath(root, 'profiles/1.yaml'),
+        join(root, 'profiles', '1.yaml'),
+      );
+    });
+
+    test('accepts an entry that stays inside after normalisation', () {
+      expect(
+        resolveArchiveEntryPath(root, 'profiles/../config.json'),
+        join(root, 'config.json'),
+      );
+    });
+
+    test('rejects a parent traversal', () {
+      expect(resolveArchiveEntryPath(root, '../evil'), isNull);
+      expect(resolveArchiveEntryPath(root, '../../../../evil'), isNull);
+      expect(resolveArchiveEntryPath(root, 'profiles/../../evil'), isNull);
+    });
+
+    test('rejects a bare parent reference', () {
+      expect(resolveArchiveEntryPath(root, '..'), isNull);
+    });
+
+    test('rejects an absolute entry', () {
+      expect(resolveArchiveEntryPath(root, '/etc/passwd'), isNull);
+    });
+
+    // Not posix-absolute, so it reaches the join as an ordinary segment and
+    // yields a path inside the root that Windows cannot create.
+    test('rejects a drive-qualified entry', () {
+      expect(resolveArchiveEntryPath(root, 'C:/evil.txt'), isNull);
+      expect(resolveArchiveEntryPath(root, r'C:\evil.txt'), isNull);
+      expect(resolveArchiveEntryPath(root, 'profiles/C:/evil.txt'), isNull);
+    });
+
+    test('rejects a UNC entry', () {
+      expect(resolveArchiveEntryPath(root, r'\\server\share\evil.txt'), isNull);
+    });
+
+    test('rejects backslash traversal', () {
+      expect(resolveArchiveEntryPath(root, r'..\evil'), isNull);
+      expect(resolveArchiveEntryPath(root, r'profiles\..\..\evil'), isNull);
+    });
+
+    test('rejects an empty or current-directory entry', () {
+      expect(resolveArchiveEntryPath(root, ''), isNull);
+      expect(resolveArchiveEntryPath(root, '.'), isNull);
+      expect(resolveArchiveEntryPath(root, './'), isNull);
+    });
+  });
+
+  test('encoding helpers round-trip structured data', () async {
+    final encoded = await encodeJSONTask({
+      'name': 'FlClash',
+      'values': [1, true, null],
+    });
+    final decoded = await decodeJSONTask<Map<String, dynamic>>(encoded);
+
+    expect(decoded['name'], 'FlClash');
+    expect(decoded['values'], [1, true, null]);
+    expect(await encodeYamlTask({'enabled': true}), contains('enabled: true'));
+    expect(await encodeMD5Task('abc'), '900150983cd24fb0d6963f7d28e17f72');
+  });
+
+  test('toGroupsTask converts, selects, and sorts core proxy data', () async {
+    final proxies = <String, dynamic>{
+      'Selector': {
+        'name': 'Selector',
+        'type': 'Selector',
+        'now': 'Beta',
+        'all': ['Zulu', 'Beta', 'missing'],
+      },
+      'Direct': {'name': 'Direct', 'type': 'Direct'},
+      'Zulu': {'name': 'Zulu', 'type': 'Direct'},
+      'Beta': {'name': 'Beta', 'type': 'Direct'},
+    };
+    final groups = await toGroupsTask(
+      ComputeGroupsState(
+        proxiesData: ProxiesData(
+          all: const ['Selector', 'Direct'],
+          proxies: proxies,
+        ),
+        sortType: ProxiesSortType.name,
+        delayMap: const {},
+        selectedMap: const {'Selector': 'Beta'},
+        defaultTestUrl: 'https://example.com/generate_204',
+      ),
+    );
+
+    expect(groups, hasLength(1));
+    expect(groups.single.name, 'Selector');
+    expect(groups.single.all.map((proxy) => proxy.name), ['Beta', 'Zulu']);
+  });
+
+  test('toGroupsTask returns empty data without proxies', () async {
+    final groups = await toGroupsTask(
+      const ComputeGroupsState(
+        proxiesData: ProxiesData(proxies: {}, all: []),
+        sortType: ProxiesSortType.none,
+        delayMap: {},
+        selectedMap: {},
+        defaultTestUrl: '',
+      ),
+    );
+
+    expect(groups, isEmpty);
+  });
+
+  test(
+    'makeRealProfileTask normalizes runtime config and added rules',
+    () async {
+      final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
+        await encodeJSONTask({
+          'dns': {
+            'enable': true,
+            'nameserver': ['1.1.1.1'],
+          },
+          'sniffer': {
+            'sniff': {
+              'HTTP': {
+                'ports': [80, '443'],
+              },
+            },
+          },
+          'proxy-providers': {
+            'remote': {'type': 'http', 'url': 'https://example.com/proxy.yaml'},
+            'file': {'type': 'file', 'path': './local.yaml'},
+          },
+          'rule-providers': {
+            'remote': {'type': 'http', 'url': 'https://example.com/rule.yaml'},
+          },
+          'rules': ['DOMAIN,existing.example,DIRECT', 'MATCH,Original'],
+        }),
+      );
+      final result = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 7,
+          rawConfig: rawConfig,
+          realPatchConfig: const PatchClashConfig(
+            mixedPort: 7893,
+            port: 7890,
+            socksPort: 7891,
+            redirPort: 7892,
+            tproxyPort: 7894,
+            allowLan: true,
+            ipv6: true,
+            hosts: {'router.local': '192.168.1.1,192.168.1.2'},
+          ),
+          overrideDns: false,
+          appendSystemDns: true,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [
+            Rule(
+              ruleAction: RuleAction.DOMAIN_SUFFIX,
+              content: 'added.example',
+              ruleTarget: 'MATCH',
+            ),
+          ],
+          defaultUA: 'FlClash-Test',
+        ),
+      );
+      final config = loadYaml(result.a) as YamlMap;
+
+      expect(result.b, hasLength(32));
+      expect(config['mixed-port'], 7893);
+      expect(config['allow-lan'], true);
+      expect(config['global-ua'], 'FlClash-Test');
+      expect(config['profile']['store-selected'], false);
+      expect(
+        config['dns']['nameserver'],
+        containsAll(['1.1.1.1', 'system://']),
+      );
+      expect(config['hosts']['router.local'], ['192.168.1.1', '192.168.1.2']);
+      expect(config['sniffer']['sniff']['HTTP']['ports'], ['80', '443']);
+      // Windows 上拼出来的是反斜杠，断言前统一成正斜杠再比，
+      // 否则这条测试只在类 Unix 上过。
+      expect(
+        _slashes(config['proxy-providers']['remote']['path'] as String),
+        startsWith('/profiles/providers/7/proxies/'),
+      );
+      expect(
+        _slashes(config['rule-providers']['remote']['path'] as String),
+        startsWith('/profiles/providers/7/rules/'),
+      );
+      expect(config['rules'], [
+        'DOMAIN-SUFFIX,added.example,Original',
+        'DOMAIN,existing.example,DIRECT',
+        'MATCH,Original',
+      ]);
+    },
+  );
+
+  test('makeRealProfileTask replaces DNS and explicit custom data', () async {
+    final result = await makeRealProfileTask(
+      const MakeRealProfileState(
+        profilesPath: '/profiles',
+        profileId: 9,
+        rawConfig: {},
+        realPatchConfig: PatchClashConfig(),
+        overrideDns: true,
+        appendSystemDns: false,
+        proxyGroups: [
+          ProxyGroup(
+            id: 1,
+            name: 'Select',
+            type: GroupType.Selector,
+            proxies: ['DIRECT'],
+          ),
+        ],
+        rules: [
+          Rule(
+            ruleAction: RuleAction.DOMAIN,
+            content: 'custom.example',
+            ruleTarget: 'DIRECT',
+          ),
+        ],
+        addedRules: [],
+        defaultUA: 'Fallback-UA',
+      ),
+    );
+    final config = loadYaml(result.a) as YamlMap;
+
+    expect(config['dns']['enable'], true);
+    expect(config['dns']['nameserver'], contains('system://'));
+    expect(config['proxy-groups'], hasLength(1));
+    expect(config['rules'], ['DOMAIN,custom.example,DIRECT']);
+  });
+
+  test('log and list tasks produce stable mapped output', () async {
+    final logs = [
+      const Log(
+        logLevel: LogLevel.info,
+        payload: 'first',
+        dateTime: '2026-07-26 10:00:00',
+      ),
+      const Log(
+        logLevel: LogLevel.error,
+        payload: 'second',
+        dateTime: '2026-07-26 10:00:01',
+      ),
+    ];
+
+    final encoded = await encodeLogsTask(logs);
+
+    expect(encoded, contains('first'));
+    expect(encoded, contains('\n'));
+    expect(await mapListTask([1, 2, 3], _double), [2, 4, 6]);
+  });
+}
+
+/// 把路径里的反斜杠统一成正斜杠，好让断言在 Windows 和类 Unix 上都成立。
+String _slashes(String path) => path.replaceAll(r'\', '/');

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android TV 启动器上的横幅（320×180dp）。
+  原先的 mipmap-xhdpi/ic_banner.png 是上游那套横版 logo，图上还印着旧应用名。
+  本机没有位图工具重画，改成用 XML 拼：浅色底 + 居中的猫。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background" />
+    <item
+        android:width="120dp"
+        android:height="120dp"
+        android:drawable="@drawable/ic_mark"
+        android:gravity="center" />
+</layer-list>

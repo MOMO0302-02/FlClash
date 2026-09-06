@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 快捷方式文案（简体中文）。键的说明见 values/strings.xml。 -->
+<resources>
+    <string name="shortcut_toggle_short">切换</string>
+    <string name="shortcut_toggle_long">切换 VPN</string>
+    <string name="shortcut_start_short">启动</string>
+    <string name="shortcut_start_long">启动 VPN</string>
+    <string name="shortcut_stop_short">暂停</string>
+    <string name="shortcut_stop_long">暂停 VPN</string>
+</resources>

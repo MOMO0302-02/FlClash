@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  桌面版 Clash Party 的图标（build/icon.png，一只坐着的猫）。
+
+  往里收 24dp：自适应图标的画布是 108dp，系统会裁成圆形/方形/水滴等形状，
+  内容必须留在中心 72dp 的安全区里，否则边缘会被切掉。
+
+  **必须写 dp 不能写百分比**：InsetDrawable 支持百分比是 API 28 才加的，
+  而本项目 minSdk 是 24——写百分比在 Android 9 以下解析失败，图标直接出不来。
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_mark_white"
+    android:inset="24dp" />

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 8 以下（API 23~25）用的启动图标。
+  这些系统不认自适应图标（mipmap-anydpi-v26），原先落到 mipmap-*/ic_launcher.webp
+  那批位图上，而那批位图还是上游的旧图形。
+  改成用 XML 现拼：浅色底 + 同一个标记，和 API 26+ 的自适应图标外观一致，
+  这样不用生成任何位图。
+
+  注意：这里不能用 <inset android:inset="22%">——inset 的百分比写法要 API 28 才支持。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background" />
+    <item android:drawable="@drawable/ic_mark_white" />
+</layer-list>

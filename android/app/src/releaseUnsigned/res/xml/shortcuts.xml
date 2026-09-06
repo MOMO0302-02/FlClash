@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  没有 keystore 时的 release（applicationIdSuffix ".unsigned"）专用的一份。与
+  src/main/res/xml/shortcuts.xml **逐字相同**，只把包名换成 com.clashparty.app.unsigned
+  （res/ 下的 XML 用不了清单占位符，只能写死）。改动请三份同步，说明看 main 那份。
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_toggle"
+        android:shortcutId="toggle_vpn"
+        android:shortcutLongLabel="@string/shortcut_toggle_long"
+        android:shortcutShortLabel="@string/shortcut_toggle_short">
+        <intent
+            android:action="com.clashparty.app.unsigned.action.TOGGLE"
+            android:targetClass="com.clashparty.app.QuickActionActivity"
+            android:targetPackage="com.clashparty.app.unsigned" />
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_start"
+        android:shortcutId="start"
+        android:shortcutLongLabel="@string/shortcut_start_long"
+        android:shortcutShortLabel="@string/shortcut_start_short">
+        <intent
+            android:action="com.clashparty.app.unsigned.action.START"
+            android:targetClass="com.clashparty.app.QuickActionActivity"
+            android:targetPackage="com.clashparty.app.unsigned" />
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_stop"
+        android:shortcutId="stop"
+        android:shortcutLongLabel="@string/shortcut_stop_long"
+        android:shortcutShortLabel="@string/shortcut_stop_short">
+        <intent
+            android:action="com.clashparty.app.unsigned.action.STOP"
+            android:targetClass="com.clashparty.app.QuickActionActivity"
+            android:targetPackage="com.clashparty.app.unsigned" />
+    </shortcut>
+</shortcuts>

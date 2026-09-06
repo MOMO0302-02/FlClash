@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  长按启动图标弹出的三个快捷方式。挂载点在 AndroidManifest 的 MainActivity 上
+  （<meta-data android:name="android.app.shortcuts" ...>），系统在**安装时**就读，
+  所以不用先把应用打开一次也能长按出来。
+
+  ⚠️ 这个文件有三份，只差 targetPackage 与 action 里的包名：
+      src/main/res/xml/shortcuts.xml             → com.clashparty.app            （正式签名的 release）
+      src/debug/res/xml/shortcuts.xml            → com.clashparty.app.dev        （debug，applicationIdSuffix ".dev"）
+      src/releaseUnsigned/res/xml/shortcuts.xml  → com.clashparty.app.unsigned   （没有 keystore 时的 release）
+  改动其中一份**必须同步另外两份**，`temp/check_shortcuts_xml.py` 会核对三份一致。
+
+  为什么不能像 AndroidManifest 那样写 ${applicationId}：
+  - 清单占位符只在 AndroidManifest.xml 里替换，res/ 下的 XML 拿不到。
+  - 也不能改成字符串资源引用、让 gradle 用 resValue 生成：系统解析快捷方式里的
+    <intent> 走的是 Intent.parseIntent(系统 Resources, ...)，那份 Resources 解不了
+    应用自己的资源 ID。所以 action / targetPackage / targetClass 只能写死。
+  - 而 QuickActionActivity 认的 action 是 "<包名>.action.START" 这种拼出来的
+    （common/Ext.kt 的 QuickAction.action），包名带后缀时就跟着变。
+
+  targetClass 不受影响：类名跟的是 gradle 的 namespace（com.clashparty.app），
+  不跟 applicationId 的后缀走。
+
+  shortcutId 要和 QuickActionActivity 里的 SHORTCUT_ID 一致，它用这个 id 调
+  reportShortcutUsed，系统才知道这条常用、该往前排。
+
+  ⚠️ 切换那条的 id 是 "toggle_vpn" 而**不能**叫 "toggle"：老版本用
+  setDynamicShortcuts 建过一条 id 正好叫 "toggle" 的动态快捷方式，而升级时系统
+  **不会**让清单里的同 id 快捷方式顶掉已经存在的那条动态的。模拟器上实测过：
+  日志明明写着「has 3 manifest shortcut(s)」，dumpsys 里却只剩 start / stop 两条
+  清单快捷方式，toggle 仍是老的动态那条（没有长文案、没有新图标）。
+  换个 id 就避开了这次碰撞；老的动态那条由 AppPlugin.initShortcuts() 下次启动时清掉。
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_toggle"
+        android:shortcutId="toggle_vpn"
+        android:shortcutLongLabel="@string/shortcut_toggle_long"
+        android:shortcutShortLabel="@string/shortcut_toggle_short">
+        <intent
+            android:action="com.clashparty.app.action.TOGGLE"
+            android:targetClass="com.clashparty.app.QuickActionActivity"
+            android:targetPackage="com.clashparty.app" />
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_start"
+        android:shortcutId="start"
+        android:shortcutLongLabel="@string/shortcut_start_long"
+        android:shortcutShortLabel="@string/shortcut_start_short">
+        <intent
+            android:action="com.clashparty.app.action.START"
+            android:targetClass="com.clashparty.app.QuickActionActivity"
+            android:targetPackage="com.clashparty.app" />
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_stop"
+        android:shortcutId="stop"
+        android:shortcutLongLabel="@string/shortcut_stop_long"
+        android:shortcutShortLabel="@string/shortcut_stop_short">
+        <intent
+            android:action="com.clashparty.app.action.STOP"
+            android:targetClass="com.clashparty.app.QuickActionActivity"
+            android:targetPackage="com.clashparty.app" />
+    </shortcut>
+</shortcuts>

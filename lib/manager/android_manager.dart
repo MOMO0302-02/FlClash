@@ -1,0 +1,60 @@
+import 'package:clash_party/common/common.dart';
+import 'package:clash_party/core/core.dart';
+import 'package:clash_party/enum/enum.dart';
+import 'package:clash_party/models/models.dart';
+import 'package:clash_party/plugins/app.dart';
+import 'package:clash_party/plugins/service.dart';
+import 'package:clash_party/providers/providers.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class AndroidManager extends ConsumerStatefulWidget {
+  final Widget child;
+
+  const AndroidManager({super.key, required this.child});
+
+  @override
+  ConsumerState<AndroidManager> createState() => _AndroidContainerState();
+}
+
+class _AndroidContainerState extends ConsumerState<AndroidManager>
+    with ServiceListener {
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(appSettingProvider.select((state) => state.hidden), (
+      prev,
+      next,
+    ) {
+      app?.updateExcludeFromRecents(next);
+    }, fireImmediately: true);
+    ref.listenManual(sharedStateProvider, (prev, next) {
+      if (prev != next) {
+        debouncer.call(FunctionTag.saveSharedFile, () async {
+          preferences.saveShareState(next);
+        }, duration: const Duration(seconds: 1));
+        if (prev?.needSyncSharedState != next.needSyncSharedState) {
+          service?.syncState(next.needSyncSharedState);
+        }
+      }
+    });
+    service?.addListener(this);
+  }
+
+  @override
+  Future<void> dispose() async {
+    service?.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onServiceEvent(CoreEvent event) {
+    coreEventManager.sendEvent(event);
+    super.onServiceEvent(event);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}

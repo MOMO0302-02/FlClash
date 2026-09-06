@@ -1,0 +1,916 @@
+import 'package:clash_party/common/common.dart';
+import 'package:clash_party/enum/enum.dart';
+import 'package:clash_party/models/common.dart';
+import 'package:clash_party/providers/providers.dart';
+import 'package:clash_party/state.dart';
+import 'package:clash_party/widgets/dialog.dart';
+import 'package:clash_party/widgets/inherited.dart';
+import 'package:clash_party/widgets/null_status.dart';
+import 'package:clash_party/widgets/pop_scope.dart';
+import 'package:clash_party/widgets/scaffold.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'effect.dart';
+import 'list.dart';
+import 'theme.dart';
+
+class OptionsDialog<T> extends StatelessWidget {
+  final String title;
+  final List<T> options;
+  final T value;
+  final String Function(T value) textBuilder;
+
+  /// When set, the selection is delivered here instead of as the pop result.
+  /// Callers whose option list contains null need this to tell a real
+  /// selection apart from a dismissed dialog.
+  final void Function(T value)? onSelected;
+
+  const OptionsDialog({
+    super.key,
+    required this.title,
+    required this.options,
+    required this.textBuilder,
+    required this.value,
+    this.onSelected,
+  });
+
+  void _handleSelected(BuildContext context, T option) {
+    final onSelected = this.onSelected;
+    if (onSelected != null) {
+      onSelected(option);
+      Navigator.of(context).pop();
+      return;
+    }
+    Navigator.of(context).pop(option);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonDialog(
+      title: title,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      // 显式带上 T：ListItem 的选中态是靠 `RadioGroup.maybeOf<T>` 反查的，
+      // 类型推断一旦落到 Object? 上就查不到，对勾会一个都不出现。
+      child: RadioGroup<T>(
+        onChanged: (value) {
+          // The radios are toggleable, so re-tapping the selected option
+          // deselects it and delivers null. Treat every null from here as
+          // "no selection": `is! T` cannot tell that apart when T is itself
+          // nullable, and reporting it would reset settings whose option
+          // list legitimately contains null - the app language among them.
+          // Picking the null option is still reachable through the row tap
+          // below, which carries the option itself.
+          if (value == null) {
+            Navigator.of(context).pop();
+            return;
+          }
+          _handleSelected(context, value);
+        },
+        groupValue: value,
+        child: Wrap(
+          children: [
+            for (final option in options)
+              Builder(
+                builder: (context) {
+                  if (value == option) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Scrollable.ensureVisible(context);
+                    });
+                  }
+                  return ListItem.radio(
+                    value: option,
+                    onTap: () {
+                      _handleSelected(context, option);
+                    },
+                    title: Text(textBuilder(option)),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CommonCheckBox extends StatelessWidget {
+  final bool? value;
+  final ValueChanged<bool?>? onChanged;
+  final bool isCircle;
+
+  const CommonCheckBox({
+    required this.value,
+    required this.onChanged,
+    this.isCircle = false,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Checkbox(
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      visualDensity: VisualDensity.standard,
+      shape: isCircle ? const CircleBorder() : null,
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+}
+
+class InputDialog extends StatefulWidget {
+  final String title;
+  final String value;
+  final String? suffixText;
+  final String? labelText;
+  final String? resetValue;
+  final String? hintText;
+  final FormFieldValidator<String>? validator;
+  final AutovalidateMode? autovalidateMode;
+  final bool? obscureText;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextInputType? keyboardType;
+
+  const InputDialog({
+    super.key,
+    required this.title,
+    required this.value,
+    this.suffixText,
+    this.resetValue,
+    this.hintText,
+    this.validator,
+    this.obscureText,
+    this.labelText,
+    this.maxLength,
+    this.inputFormatters,
+    this.keyboardType,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
+  });
+
+  @override
+  State<InputDialog> createState() => _InputDialogState();
+}
+
+class _InputDialogState extends State<InputDialog> {
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController _textController;
+
+  String get value => widget.value;
+
+  String get title => widget.title;
+
+  String? get suffixText => widget.suffixText;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController(text: value);
+  }
+
+  Future<void> _handleUpdate() async {
+    if (_formKey.currentState?.validate() == false) return;
+    final text = _textController.value.text;
+    Navigator.of(context).pop<String>(text);
+  }
+
+  Future<void> _handleReset() async {
+    if (widget.resetValue == null) {
+      return;
+    }
+    Navigator.of(context).pop<String>(widget.resetValue);
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return CommonDialog(
+      title: title,
+      actions: [
+        if (widget.resetValue != null &&
+            _textController.value.text != widget.resetValue) ...[
+          TextButton(
+            onPressed: _handleReset,
+            child: Text(appLocalizations.reset),
+          ),
+        ] else
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(appLocalizations.cancel),
+          ),
+        TextButton(
+          onPressed: _handleUpdate,
+          child: Text(appLocalizations.submit),
+        ),
+      ],
+      child: Form(
+        autovalidateMode: widget.autovalidateMode,
+        key: _formKey,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            TextFormField(
+              maxLength: widget.maxLength,
+              inputFormatters: widget.inputFormatters,
+              obscureText: widget.obscureText ?? false,
+              keyboardType: widget.keyboardType ?? TextInputType.url,
+              maxLines: widget.obscureText == true ? 1 : 5,
+              minLines: 1,
+              controller: _textController,
+              onFieldSubmitted: (_) {
+                _handleUpdate();
+              },
+              // 不再写死 OutlineInputBorder：显式的 border 会盖掉主题里那套
+              // rim 描边 + 聚焦转实蓝的取值，让输入框退回 Material 默认长相。
+              decoration: InputDecoration(
+                suffixText: suffixText,
+                hintText: widget.hintText,
+                labelText: widget.labelText,
+              ),
+              validator: widget.validator,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ListInputPage extends ConsumerStatefulWidget {
+  final String title;
+  final List<String> items;
+  final Widget Function(String item) titleBuilder;
+  final Widget Function(String item)? subtitleBuilder;
+  final Widget Function(String item)? leadingBuilder;
+  final String? valueLabel;
+  final int? itemMaxLength;
+
+  const ListInputPage({
+    super.key,
+    required this.title,
+    required this.items,
+    required this.titleBuilder,
+    this.leadingBuilder,
+    this.valueLabel,
+    this.subtitleBuilder,
+    this.itemMaxLength,
+  });
+
+  @override
+  ConsumerState createState() => _ListInputPageState();
+}
+
+class _ListInputPageState extends ConsumerState<ListInputPage> {
+  List<String> _items = [];
+  late List<String> _originItems;
+  final _key = utils.id;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = widget.items;
+    _originItems = List<String>.from(_items);
+  }
+
+  void _handleReorder(int oldIndex, newIndex) {
+    _items = _items.copyAndReorder(oldIndex, newIndex);
+    setState(() {});
+  }
+
+  void _handleSelected(String value) {
+    ref.read(itemsProvider(_key).notifier).update((state) {
+      final newState = Set<String>.from(state)..addOrRemove(value);
+      return newState;
+    });
+  }
+
+  void _handleSelectAll() {
+    final ids = _items.toSet();
+    ref.read(itemsProvider(_key).notifier).update((selected) {
+      return selected.containsAll(ids) ? {} : ids;
+    });
+  }
+
+  Future<void> _handleAddOrEdit([String? item]) async {
+    final appLocalizations = context.appLocalizations;
+    String? uniqueValidator(String? value) {
+      final index = _items.indexWhere((entry) {
+        return entry == value;
+      });
+      final current = item == value;
+      if (index != -1 && !current) {
+        return appLocalizations.existsTip(appLocalizations.value);
+      }
+      return null;
+    }
+
+    final value = await globalState.showCommonDialog<String>(
+      child: AddDialog(
+        valueField: Field(
+          label: widget.valueLabel ?? appLocalizations.value,
+          value: item ?? '',
+          validator: uniqueValidator,
+        ),
+        valueMaxLength: widget.itemMaxLength,
+        title: item != null ? appLocalizations.edit : appLocalizations.add,
+      ),
+    );
+
+    if (value == null) return;
+    final index = _items.indexWhere((entry) {
+      return entry == item;
+    });
+    final nextItems = List<String>.from(_items);
+    if (item != null) {
+      nextItems[index] = value;
+    } else {
+      nextItems.add(value);
+    }
+    _items = nextItems;
+    setState(() {});
+  }
+
+  void _handleDelete() {
+    final selectedItems = ref.read(itemsProvider(_key));
+    final newItems = _items
+        .where((item) => !selectedItems.contains(item))
+        .toList();
+    _items = newItems;
+    ref.read(itemsProvider(_key).notifier).value = {};
+    setState(() {});
+  }
+
+  Future<void> _handleReset() async {
+    final res = await globalState.showMessage(
+      message: TextSpan(text: context.appLocalizations.resetPageChangesTip),
+    );
+    if (res != true) {
+      return;
+    }
+    _items = _originItems;
+    setState(() {});
+  }
+
+  Widget _buildItem({
+    required String value,
+    required int index,
+    required int length,
+    required bool isSelected,
+    required bool isEditing,
+  }) {
+    final position = ItemPosition.get(index, length);
+    return ReorderableDelayedDragStartListener(
+      key: ValueKey(value),
+      index: index,
+      child: ItemPositionProvider(
+        position: position,
+        child: SelectedDecorationListItem(
+          title: widget.titleBuilder(value),
+          isSelected: isSelected,
+          isEditing: isEditing,
+          onSelected: () {
+            _handleSelected(value);
+          },
+          onPressed: () {
+            _handleAddOrEdit(value);
+          },
+          leading: widget.leadingBuilder != null
+              ? widget.leadingBuilder!(value)
+              : null,
+          subtitle: widget.subtitleBuilder != null
+              ? widget.subtitleBuilder!(value)
+              : null,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final selectedItems = ref.watch(itemsProvider(_key));
+    return CommonPopScope(
+      onPop: (_) {
+        if (selectedItems.isNotEmpty) {
+          ref.read(itemsProvider(_key).notifier).value = {};
+          return false;
+        }
+        Navigator.of(context).pop(_items);
+        return false;
+      },
+      child: CommonScaffold(
+        title: widget.title,
+        actions: [
+          if (selectedItems.isNotEmpty) ...[
+            CommonMinIconButtonTheme(
+              child: IconButton.filledTonal(
+                onPressed: _handleDelete,
+                icon: const Icon(Icons.delete),
+              ),
+            ),
+            const SizedBox(width: 2),
+          ] else if (!stringListEquality.equals(_items, _originItems)) ...[
+            CommonMinIconButtonTheme(
+              child: IconButton.filledTonal(
+                onPressed: _handleReset,
+                icon: const Icon(Icons.replay),
+              ),
+            ),
+            const SizedBox(width: 2),
+          ],
+          CommonMinFilledButtonTheme(
+            child: selectedItems.isNotEmpty
+                ? FilledButton(
+                    onPressed: _handleSelectAll,
+                    child: Text(appLocalizations.selectAll),
+                  )
+                : FilledButton.tonal(
+                    onPressed: () {
+                      _handleAddOrEdit();
+                    },
+                    child: Text(appLocalizations.add),
+                  ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        body: _items.isEmpty
+            ? NullStatus(label: appLocalizations.noData)
+            : ReorderableListView.builder(
+                padding: const EdgeInsets.only(
+                  bottom: 16 + 64,
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                ),
+                buildDefaultDragHandles: false,
+                itemCount: _items.length,
+                itemBuilder: (context, index) {
+                  final value = _items[index];
+                  return _buildItem(
+                    value: value,
+                    index: index,
+                    length: _items.length,
+                    isSelected: selectedItems.contains(value),
+                    isEditing: selectedItems.isNotEmpty,
+                  );
+                },
+                proxyDecorator: (child, index, animation) {
+                  final value = _items[index];
+                  return commonProxyDecorator(
+                    _buildItem(
+                      value: value,
+                      index: index,
+                      length: _items.length,
+                      isSelected: selectedItems.contains(value),
+                      isEditing: selectedItems.isNotEmpty,
+                    ),
+                    index,
+                    animation,
+                  );
+                },
+                onReorderItem: _handleReorder,
+              ),
+      ),
+    );
+  }
+}
+
+class MapInputPage extends ConsumerStatefulWidget {
+  final String title;
+  final Map<String, String> map;
+  final Widget Function(MapEntry<String, String> item) titleBuilder;
+  final Widget Function(MapEntry<String, String> item)? subtitleBuilder;
+  final Widget Function(MapEntry<String, String> item)? leadingBuilder;
+  final String? keyLabel;
+  final String? valueLabel;
+  final int? keyMaxLength;
+  final int? valueMaxLength;
+
+  const MapInputPage({
+    super.key,
+    required this.title,
+    required this.map,
+    required this.titleBuilder,
+    this.leadingBuilder,
+    this.keyLabel,
+    this.valueLabel,
+    this.subtitleBuilder,
+    this.keyMaxLength,
+    this.valueMaxLength,
+  });
+
+  @override
+  ConsumerState<MapInputPage> createState() => _MapInputPageState();
+}
+
+class _MapInputPageState extends ConsumerState<MapInputPage> {
+  List<MapEntry<String, String>> _items = [];
+  late final List<MapEntry<String, String>> _originItems;
+  final _key = utils.id;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List<MapEntry<String, String>>.from(widget.map.entries);
+    _originItems = List<MapEntry<String, String>>.from(_items);
+  }
+
+  void _handleReorder(int oldIndex, newIndex) {
+    _items = _items.copyAndReorder(oldIndex, newIndex);
+    setState(() {});
+  }
+
+  void _handleSelected(MapEntry<String, String> value) {
+    ref.read(itemsProvider(_key).notifier).update((state) {
+      final newState = Set<String>.from(state)..addOrRemove(value.key);
+      return newState;
+    });
+  }
+
+  void _handleSelectAll() {
+    final ids = _items.map((item) => item.key).toSet();
+    ref.read(itemsProvider(_key).notifier).update((selected) {
+      return selected.containsAll(ids) ? {} : ids;
+    });
+  }
+
+  Future<void> _handleAddOrEdit([MapEntry<String, String>? item]) async {
+    final appLocalizations = context.appLocalizations;
+    String? uniqueValidator(String? value) {
+      final index = _items.indexWhere((entry) {
+        return entry.key == value;
+      });
+      final current = item?.key == value;
+      if (index != -1 && !current) {
+        return appLocalizations.existsTip(appLocalizations.key);
+      }
+      return null;
+    }
+
+    final keyField = Field(
+      label: widget.keyLabel ?? appLocalizations.key,
+      value: item == null ? '' : item.key,
+      validator: uniqueValidator,
+    );
+
+    final valueField = Field(
+      label: widget.valueLabel ?? appLocalizations.value,
+      value: item == null ? '' : item.value,
+    );
+
+    final value = await globalState.showCommonDialog<MapEntry<String, String>>(
+      child: AddDialog(
+        keyField: keyField,
+        valueField: valueField,
+        keyMaxLength: widget.keyMaxLength,
+        valueMaxLength: widget.valueMaxLength,
+        title: item != null ? appLocalizations.edit : appLocalizations.add,
+      ),
+    );
+    if (value == null) return;
+    final index = _items.indexWhere((entry) {
+      return entry.key == item?.key;
+    });
+
+    final nextItems = List<MapEntry<String, String>>.from(_items);
+    if (item != null) {
+      nextItems[index] = value;
+    } else {
+      nextItems.add(value);
+    }
+    _items = nextItems;
+    setState(() {});
+  }
+
+  void _handleDelete() {
+    final selectedItems = ref.read(itemsProvider(_key));
+    final newItems = _items
+        .where((item) => !selectedItems.contains(item.key))
+        .toList();
+    _items = newItems;
+    ref.read(itemsProvider(_key).notifier).value = {};
+    setState(() {});
+  }
+
+  Future<void> _handleReset() async {
+    final res = await globalState.showMessage(
+      message: TextSpan(text: context.appLocalizations.resetPageChangesTip),
+    );
+    if (res != true) {
+      return;
+    }
+    _items = _originItems;
+    setState(() {});
+  }
+
+  Widget _buildItem({
+    required MapEntry<String, String> value,
+    required int index,
+    required int length,
+    required bool isSelected,
+    required bool isEditing,
+  }) {
+    final position = ItemPosition.get(index, length);
+    return ReorderableDelayedDragStartListener(
+      key: ValueKey(value),
+      index: index,
+      child: ItemPositionProvider(
+        position: position,
+        child: SelectedDecorationListItem(
+          title: widget.titleBuilder(value),
+          leading: widget.leadingBuilder != null
+              ? widget.leadingBuilder!(value)
+              : null,
+          subtitle: widget.subtitleBuilder != null
+              ? widget.subtitleBuilder!(value)
+              : null,
+          isSelected: isSelected,
+          isEditing: isEditing,
+          onSelected: () {
+            _handleSelected(value);
+          },
+          onPressed: () {
+            _handleAddOrEdit(value);
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final selectedItems = ref.watch(itemsProvider(_key));
+    return CommonPopScope(
+      onPop: (_) {
+        if (selectedItems.isNotEmpty) {
+          ref.read(itemsProvider(_key).notifier).value = {};
+          return false;
+        }
+        Navigator.of(context).pop(Map<String, String>.fromEntries(_items));
+        return false;
+      },
+      child: CommonScaffold(
+        title: widget.title,
+        actions: [
+          if (selectedItems.isNotEmpty) ...[
+            CommonMinIconButtonTheme(
+              child: IconButton.filledTonal(
+                onPressed: _handleDelete,
+                icon: const Icon(Icons.delete),
+              ),
+            ),
+            const SizedBox(width: 2),
+          ] else if (!stringAndStringMapEntryListEquality.equals(
+            _items,
+            _originItems,
+          )) ...[
+            CommonMinIconButtonTheme(
+              child: IconButton.filledTonal(
+                onPressed: _handleReset,
+                icon: const Icon(Icons.replay),
+              ),
+            ),
+            const SizedBox(width: 2),
+          ],
+          CommonMinFilledButtonTheme(
+            child: selectedItems.isNotEmpty
+                ? FilledButton(
+                    onPressed: _handleSelectAll,
+                    child: Text(appLocalizations.selectAll),
+                  )
+                : FilledButton.tonal(
+                    onPressed: () {
+                      _handleAddOrEdit();
+                    },
+                    child: Text(appLocalizations.add),
+                  ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        body: _items.isEmpty
+            ? NullStatus(label: appLocalizations.noData)
+            : ReorderableListView.builder(
+                padding: const EdgeInsets.only(
+                  bottom: 16 + 64,
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                ),
+                buildDefaultDragHandles: false,
+                itemCount: _items.length,
+                itemBuilder: (context, index) {
+                  final value = _items[index];
+                  return _buildItem(
+                    value: value,
+                    index: index,
+                    length: _items.length,
+                    isSelected: selectedItems.contains(value.key),
+                    isEditing: selectedItems.isNotEmpty,
+                  );
+                },
+                proxyDecorator: (child, index, animation) {
+                  final value = _items[index];
+                  return commonProxyDecorator(
+                    _buildItem(
+                      value: value,
+                      index: index,
+                      length: _items.length,
+                      isSelected: selectedItems.contains(value.key),
+                      isEditing: selectedItems.isNotEmpty,
+                    ),
+                    index,
+                    animation,
+                  );
+                },
+                onReorderItem: _handleReorder,
+              ),
+      ),
+    );
+  }
+}
+
+class AddDialog extends StatefulWidget {
+  final String title;
+  final Field? keyField;
+  final Field valueField;
+  final int? keyMaxLength;
+  final int? valueMaxLength;
+
+  const AddDialog({
+    super.key,
+    required this.title,
+    this.keyField,
+    required this.valueField,
+    this.keyMaxLength,
+    this.valueMaxLength,
+  });
+
+  @override
+  State<AddDialog> createState() => _AddDialogState();
+}
+
+class _AddDialogState extends State<AddDialog> {
+  TextEditingController? _keyController;
+  late TextEditingController _valueController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  Field? get keyField => widget.keyField;
+
+  Field get valueField => widget.valueField;
+
+  @override
+  void initState() {
+    super.initState();
+    if (keyField != null) {
+      _keyController = TextEditingController(text: keyField!.value);
+    }
+    _valueController = TextEditingController(text: valueField.value);
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    if (keyField != null) {
+      Navigator.of(context).pop<MapEntry<String, String>>(
+        MapEntry(_keyController!.text, _valueController.text),
+      );
+    } else {
+      Navigator.of(context).pop<String>(_valueController.text);
+    }
+  }
+
+  @override
+  void dispose() {
+    _keyController?.dispose();
+    _valueController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return CommonDialog(
+      title: widget.title,
+      actions: [
+        TextButton(onPressed: _submit, child: Text(appLocalizations.confirm)),
+      ],
+      child: Form(
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        key: _formKey,
+        child: Wrap(
+          runSpacing: 16,
+          children: [
+            if (keyField != null)
+              TextFormField(
+                maxLines: 3,
+                minLines: 1,
+                inputFormatters: widget.keyMaxLength == null
+                    ? null
+                    : TextInputLimits.limit(widget.keyMaxLength!),
+                controller: _keyController,
+                decoration: InputDecoration(labelText: keyField!.label),
+                validator: (String? value) {
+                  String? res;
+                  if (keyField!.validator != null) {
+                    res = keyField!.validator!(value);
+                  }
+                  if (res != null) {
+                    return res;
+                  }
+                  if (value == null || value.isEmpty) {
+                    return appLocalizations.emptyTip(appLocalizations.key);
+                  }
+                  return null;
+                },
+              ),
+            TextFormField(
+              maxLines: 3,
+              minLines: 1,
+              inputFormatters: widget.valueMaxLength == null
+                  ? null
+                  : TextInputLimits.limit(widget.valueMaxLength!),
+              keyboardType: TextInputType.text,
+              controller: _valueController,
+              decoration: InputDecoration(labelText: valueField.label),
+              onFieldSubmitted: (_) {
+                _submit();
+              },
+              validator: (String? value) {
+                String? res;
+                if (valueField.validator != null) {
+                  res = valueField.validator!(value);
+                }
+                if (res != null) {
+                  return res;
+                }
+                if (value == null || value.isEmpty) {
+                  return appLocalizations.emptyTip(appLocalizations.value);
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NoInputBorder extends InputBorder {
+  const NoInputBorder() : super(borderSide: BorderSide.none);
+
+  @override
+  NoInputBorder copyWith({BorderSide? borderSide}) => const NoInputBorder();
+
+  @override
+  bool get isOutline => false;
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
+
+  @override
+  NoInputBorder scale(double t) => const NoInputBorder();
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) {
+    return Path()..addRect(rect);
+  }
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    return Path()..addRect(rect);
+  }
+
+  @override
+  void paintInterior(
+    Canvas canvas,
+    Rect rect,
+    Paint paint, {
+    TextDirection? textDirection,
+  }) {
+    canvas.drawRect(rect, paint);
+  }
+
+  @override
+  bool get preferPaintInterior => true;
+
+  @override
+  void paint(
+    Canvas canvas,
+    Rect rect, {
+    double? gapStart,
+    double gapExtent = 0.0,
+    double gapPercentage = 0.0,
+    TextDirection? textDirection,
+  }) {}
+}

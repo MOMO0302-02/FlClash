@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  通知栏 / 快捷开关图标，与启动图标同一个标记。
+  系统会按 alpha 整体染色，所以图形本身是什么颜色不重要，只有轮廓有意义。
+
+  往里收 3dp：状态栏图标是 24dp，留点边距免得贴边。
+
+  **必须写 dp 不能写百分比**：InsetDrawable 支持百分比是 API 28 才加的，
+  而本项目 minSdk 是 24——写百分比在 Android 9 以下解析失败，会导致前台服务
+  的通知起不来，进而 VPN 用不了。
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_mark"
+    android:inset="3dp" />

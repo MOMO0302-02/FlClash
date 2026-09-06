@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  长按图标菜单里「切换」那条的图标：电源符号（一个缺口的圆环 + 竖线）。
+
+  **只用最基础的 <vector>**：path + fillColor，没有 gradient、没有 fillType、
+  没有 <adaptive-icon>。本项目 minSdk 是 24，而 <adaptive-icon> 要 26、
+  vector 的 gradient 要 24——这里踩过一次（InsetDrawable 的百分比要 28，
+  写了之后 Android 9 以下图标直接出不来）。
+
+  颜色用中性深灰而不是纯黑：安卓 8 以上启动器会把快捷方式图标垫在一个浅色圆盘上，
+  深灰在浅盘上看得清；老系统上直接贴在弹层里，也不至于糊成一团黑。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF404040"
+        android:pathData="M11,3h2v10h-2z" />
+    <path
+        android:fillColor="#FF404040"
+        android:pathData="M16.24,5.22l-1.42,1.42A6,6 0,1 1,9.18 6.64L7.76,5.22a8,8 0,1 0,8.48 0z" />
+</vector>

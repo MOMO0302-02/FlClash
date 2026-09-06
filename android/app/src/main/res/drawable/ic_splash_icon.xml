@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  闪屏上显示的那只猫（浅色模式）。
+
+  用它的本色（深板岩灰）画在浅色底上，不额外垫圆底。
+
+  之前的做法是**黑底 + 一块近白色的圆底 + 深色的猫**，因为猫本身是深色的、直接
+  放黑底上看不见。代价是启动时屏幕中央出现一个很扎眼的白圆盘——用户看到的就是
+  「背景是黑的、图标是白的」。正确的解法是让底色和猫的明暗相配，而不是给猫垫一
+  块和背景冲突的板子。
+
+  往里收 24dp 的理由同 ic_launcher_foreground：自适应图标画布 108dp，安全区只有
+  中心 72dp。**必须写 dp 不能写百分比**，InsetDrawable 的百分比是 API 28 才有的，
+  本项目 minSdk 24。
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_mark"
+    android:inset="24dp" />

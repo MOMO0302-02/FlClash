@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 长按图标菜单里「暂停」那条的图标：实心方块。约束同 ic_shortcut_toggle.xml。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF404040"
+        android:pathData="M5,5h14v14h-14z" />
+</vector>
