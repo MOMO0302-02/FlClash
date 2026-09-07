@@ -45,15 +45,34 @@ provider tests, UI work, and core/platform changes.
 - 已验证产物：`temp/apk/ClashMO-0904k.apk`（2026-09-04，51MB），安卓可打包。
 - `temp/baseline4.log` 记录约 1,136 条测试通过，退出码 0（该日志由改名期间的会话生成）。
 
-### 改名遗留（尚未处理，均为小尾巴）
+### 改名收尾（2026-09-07 第二轮，35 个文件）
 
-- `lib/common/path.dart:47` 仍找 `FlClashCore` 可执行文件、`:86` 仍用 `FlClash.lock`
-  —— **优先级最高，可能影响桌面版启动**。
-- `FlClashHttpOverrides` 类名未改：`lib/common/http.dart:8`、`lib/common/request.dart:27`、`lib/main.dart:21`。
-- `android/common/.../common/GlobalState.kt:13` 通知频道名仍为 `FlClash`。
-- `lib/views/about.dart:53,68` 链接仍指向原作者 Telegram 群与仓库（待定：是否保留以致敬上游）。
-- `lib/common/constant.dart` 的 `repository` 常量仍为 `MOMO0302-02/FlClash`，仓库已改名，此处需更新。
-- 子模块 `core/Clash.Meta` 仍指向 `chen08209/Clash.Meta` 的 `FlClash` 分支（上游资源，无需改）。
+第一轮只改了 Dart 包名和安卓包路径，二进制名与桌面端显示名整套未动。本轮补齐：
+
+- **修复真实故障**：`constant.dart` 的 `appHelperService` 在第一轮被改成
+  `ClashMOHelperService`，但构建产物、Rust 服务注册名（`services/helper/src/service/windows.rs`）、
+  Inno Setup 进程列表仍是 `FlClashHelperService`，两端对不上会导致 **Windows 管理员服务安装/查询失败
+  （TUN 模式不可用）**。本轮把产物侧统一改为 ClashMO，两端一致。
+- 二进制名：`FlClashCore` → `ClashMOCore`、`FlClashHelperService` → `ClashMOHelperService`
+  （`build_config.yaml`、`options.dart` 默认值、三平台 CMake/podspec、Xcode 工程、Inno Setup、Rust）。
+- 桌面端显示名与产物名：Windows/Linux/macOS 的 `BINARY_NAME`、窗口标题、`PRODUCT_NAME`、
+  打包配置（deb/rpm/AppImage/dmg/exe）全部 ClashMO。
+- Dart：`FlClashHttpOverrides` → `ClashMOHttpOverrides`、`FlClash.lock` → `ClashMO.lock`、
+  isolate 名、`repository` 常量 → `MOMO0302-02/ClashMO`。
+- 安卓：通知频道、通知标题、日志 tag、VPN 会话名、文件提供器标题；`core/tun/tun.go` 的 TUN 设备名。
+- 「关于」页移除了原作者 Telegram 群入口（ClashMO 无自有群，留着等于把用户导去别人的群）。
+- **已验证**（2026-09-07，`temp/verify_rename.ps1`）：`flutter analyze lib test` 退出码 0
+  （仅 10 条 `withOpacity` 等旧写法 info），`flutter test` 417 项全通过、退出码 0。
+
+### 刻意保留的上游引用（不是遗漏，勿"顺手改掉"）
+
+- `lib/views/about.dart` 的内核链接 `chen08209/Clash.Meta/tree/FlClash`
+  —— 2026-09-07 已访问核实：该分支真实存在（4,049 commits）。改成 ClashMO 会变成死链。
+- `.gitmodules` 的 `branch = FlClash`、`setup.dart:167` 的 `--git-ref FlClash`
+  —— 均为上游仓库里的真实分支名，改了会拉不到代码。
+- `origin`/`upstream` 两个 remote 仍指向 `chen08209/FlClash`，用于同步上游更新。
+- `README.md`、`.github/` 模板、`release_telegram.py` 中的上游徽章与发布链接
+  —— 属于上游发布流程，本 fork 未使用；若将来自建发布流程再一并处理。
 
 ## 踩坑记录
 
@@ -66,6 +85,32 @@ provider tests, UI work, and core/platform changes.
 - 2026-09-07：`git add -A` 会把本地工作素材一并纳入。已在 `.gitignore` 排除
   `/.toolchain/`、`/temp/`、`/_产物备份/`、`/core/Clash.Meta-smart/`、`/.design/`、`/.smart-merge/`。
   提交前务必 `git show --stat HEAD` 检查有无混入截图或大文件。
+- 2026-09-07：改名类任务**先摸清"名字是谁生成的"再改**。本项目 `FlClashCore` 出现在
+  `path.dart` 里看似是遗留，实则整套构建（`build_config.yaml` → CMake/podspec/Xcode）
+  都在生成这个文件名，单改消费侧会直接找不到内核。改二进制名必须**生产侧与消费侧一起改**。
+- 2026-09-07：`sed 's/FlClash/ClashMO/g'` 全量替换会把 URL 里的**上游用户名**一起改坏，
+  造出 `github.com/chen08209/ClashMO` 这种死链（已在 `windows/packaging/exe/make_config.yaml` 修回）。
+  批量替换后务必回查 `chen08209/ClashMO`、`t.me/ClashMO` 这类组合。
+- 2026-09-07：`.toolchain/env.ps1` **会切换当前目录**。脚本里 `. env.ps1` 之后必须重新
+  `Set-Location` 回项目根，且日志等输出路径一律写绝对路径——否则会落到
+  `.toolchain\temp\` 之类不存在的路径，脚本报错但**外层退出码仍是 0**，看起来"跑通了"实则没跑。
+  验证类脚本必须在末尾自行打印真实退出码（`ANALYZE_EXIT=`/`TEST_EXIT=`）并检查日志非空。
+- 2026-09-07：**加载 `.toolchain/env.ps1` 会覆盖调用方的同名变量**。它内部用了
+  `$root`（值为 `.toolchain` 目录），而点号加载是在当前作用域执行的，
+  所以脚本里凡是用 `$root` 命名的路径，加载后全部被改指到 `.toolchain\`。
+  症状：日志写去 `.toolchain\temp\`（假成功）、`flutter analyze $root\lib` 报
+  "f:\ai\clashmo\.toolchain\lib does not exist"。
+  写调用 env.ps1 的脚本时**变量名避开 `$root`**，路径直接写死绝对路径。
+- 2026-09-07：`flutter analyze` 在项目根不带路径运行时，会把 `.toolchain\flutter`
+  自带的 SDK 示例代码一起分析，刷出约 104 万行与本项目无关的错误
+  （`Analyzing .toolchain...`、`flutter\dev\a11y_assessments\...`）。
+  `.gitignore` 对 analyze 无效。**必须显式指定目录**：`flutter analyze --no-fatal-infos lib test`。
+- 2026-09-07：`flutter test` 整体跑时 `test/common/converter_test.dart` 偶发报
+  "Connection closed before test suite loaded"（并发加载导致，非代码问题）。
+  单独跑该文件退出码 0，整体重跑一次也 0。遇到此错先单跑该文件再判定，不要当成回归。
+- 2026-09-07：跑 `flutter test` 会顺带升级 `pubspec.lock` 里几个小版本依赖
+  （intl、matcher、meta、test、vector_math 等）。提交改名类变更前先
+  `git checkout -- pubspec.lock`，避免把无关的依赖升级混进业务提交。
 - 2026-09-07：Claude 桌面版侧边栏项目名仍显示旧名「FlClash」。原因是目录曾由
   `F:\AI\FlClash` 改名为 `F:\AI\ClashMO`，而项目显示名在首次识别时被记录、未随目录更新。
   该名称不在本机配置文件内（`~/.claude.json`、`~/.claude/`、桌面版 AppData 均搜索无果），

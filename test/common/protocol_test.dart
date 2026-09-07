@@ -6,14 +6,14 @@ void main() {
     test('builds registry writes for URL protocol registration', () {
       const plan = ProtocolRegistrationPlan(
         scheme: 'flclash',
-        executable: r'C:\Program Files\FlClash\FlClash.exe',
+        executable: r'C:\Program Files\ClashMO\ClashMO.exe',
       );
 
       expect(plan.protocolKey, r'Software\Classes\flclash');
       expect(plan.commandKey, r'shell\open\command');
       expect(plan.protocolValueName, 'URL Protocol');
       expect(plan.protocolValue, '');
-      expect(plan.command, r'"C:\Program Files\FlClash\FlClash.exe" "%1"');
+      expect(plan.command, r'"C:\Program Files\ClashMO\ClashMO.exe" "%1"');
     });
   });
 }

@@ -5,7 +5,7 @@ import 'package:clash/providers/providers.dart';
 import 'package:clash/state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class FlClashHttpOverrides extends HttpOverrides {
+class ClashMOHttpOverrides extends HttpOverrides {
   static String handleFindProxy(Uri url) {
     if ([localhost].contains(url.host)) {
       return 'DIRECT';

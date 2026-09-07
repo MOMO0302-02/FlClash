@@ -21,10 +21,10 @@ function(apply_buildkit)
 
   # The output files the build_tool produces
   if(WIN32)
-    set(_output "${PROJECT_ROOT}/libclash/windows/FlClashCore.exe")
+    set(_output "${PROJECT_ROOT}/libclash/windows/ClashMOCore.exe")
     set(_platform_args "windows")
   else()
-    set(_output "${PROJECT_ROOT}/libclash/linux/FlClashCore")
+    set(_output "${PROJECT_ROOT}/libclash/linux/ClashMOCore")
     set(_platform_args "linux")
   endif()
 

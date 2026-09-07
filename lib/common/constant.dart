@@ -56,7 +56,7 @@ const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
 const double dialogCommonWidth = 300;
-const repository = 'MOMO0302-02/FlClash';
+const repository = 'MOMO0302-02/ClashMO';
 const defaultExternalController = '127.0.0.1:9090';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
@@ -111,9 +111,9 @@ double getWidgetHeight(num lines) {
 
 const maxLength = 1000;
 
-const mainIsolate = 'FlClashMainIsolate';
+const mainIsolate = 'ClashMOMainIsolate';
 
-const serviceIsolate = 'FlClashServiceIsolate';
+const serviceIsolate = 'ClashMOServiceIsolate';
 
 const defaultPrimaryColors = [
   0xFF795548,
