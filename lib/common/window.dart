@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/config.dart';
+import 'package:clash/common/common.dart';
+import 'package:clash/models/config.dart';
 import 'package:flutter/material.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';

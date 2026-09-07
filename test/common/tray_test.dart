@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/tray.dart';
+import 'package:clash/common/tray.dart';
 import 'package:test/test.dart';
 
 void main() {

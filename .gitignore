@@ -75,3 +75,11 @@ devtools_options.yaml
 # FVM Version Cache
 .fvm/
 .fvmrc
+
+# ClashMO local-only working dirs (not part of the source tree)
+/.toolchain/
+/temp/
+/_产物备份/
+/core/Clash.Meta-smart/
+/.design/
+/.smart-merge/

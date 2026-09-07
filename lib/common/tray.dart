@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
+import 'package:clash/enum/enum.dart';
+import 'package:clash/models/models.dart';
+import 'package:clash/providers/providers.dart';
+import 'package:clash/state.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:tray_manager/tray_manager.dart';

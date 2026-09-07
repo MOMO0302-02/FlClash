@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fl_clash/pages/error.dart';
-import 'package:fl_clash/state.dart';
+import 'package:clash/pages/error.dart';
+import 'package:clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rust_api/rust_api.dart';

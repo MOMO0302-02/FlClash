@@ -1,8 +1,8 @@
-import 'package:fl_clash/common/proxy.dart';
-import 'package:fl_clash/common/print.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/state.dart';
+import 'package:clash/common/proxy.dart';
+import 'package:clash/common/print.dart';
+import 'package:clash/enum/enum.dart';
+import 'package:clash/models/models.dart';
+import 'package:clash/providers/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

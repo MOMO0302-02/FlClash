@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:fl_clash/widgets/inherited.dart';
+import 'package:clash/widgets/inherited.dart';
 import 'package:flutter/material.dart';
 
 typedef TickWidgetBuilder = Widget Function(BuildContext context, int tick);

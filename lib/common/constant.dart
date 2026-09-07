@@ -4,19 +4,19 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:clash/common/common.dart';
+import 'package:clash/enum/enum.dart';
+import 'package:clash/models/models.dart';
 import 'package:flutter/material.dart';
 
-const appName = 'FlClash';
-const appHelperService = 'FlClashHelperService';
+const appName = 'ClashMO';
+const appHelperService = 'ClashMOHelperService';
 const coreName = 'clash.meta';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const packageName = 'com.follow.clash';
-final unixSocketPath = '/tmp/FlClashSocket_${Random().nextInt(10000)}.sock';
-final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${Random().nextInt(10000)}';
+const packageName = 'com.clashmo.android';
+final unixSocketPath = '/tmp/ClashMOSocket_${Random().nextInt(10000)}.sock';
+final windowsPipeName = '\\\\.\\pipe\\ClashMOCore_${Random().nextInt(10000)}';
 const helperPort = 47890;
 const maxTextScale = 1.4;
 const minTextScale = 0.8;
@@ -56,7 +56,7 @@ const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
 const double dialogCommonWidth = 300;
-const repository = 'chen08209/FlClash';
+const repository = 'MOMO0302-02/FlClash';
 const defaultExternalController = '127.0.0.1:9090';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;

@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:clash/common/common.dart';
+import 'package:clash/enum/enum.dart';
+import 'package:clash/models/common.dart';
+import 'package:clash/providers/app.dart';
+import 'package:clash/state.dart';
+import 'package:clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

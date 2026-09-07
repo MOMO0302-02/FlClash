@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:clash/common/common.dart';
+import 'package:clash/models/models.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class DAVClient {

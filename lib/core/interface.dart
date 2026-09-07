@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:clash/common/common.dart';
+import 'package:clash/enum/enum.dart';
+import 'package:clash/models/models.dart';
 
 mixin CoreInterface {
   Future<bool> init(InitParams params);

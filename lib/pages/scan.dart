@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:fl_clash/common/color.dart';
-import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/activate_box.dart';
+import 'package:clash/common/color.dart';
+import 'package:clash/providers/action.dart';
+import 'package:clash/state.dart';
+import 'package:clash/widgets/activate_box.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 

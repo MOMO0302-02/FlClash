@@ -1,8 +1,8 @@
-import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:clash/common/theme.dart';
+import 'package:clash/l10n/l10n.dart';
+import 'package:clash/providers/app.dart';
+import 'package:clash/state.dart';
+import 'package:clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:fl_clash/common/picker.dart';
+import 'package:clash/common/picker.dart';
 import 'package:test/test.dart';
 
 void main() {
