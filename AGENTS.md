@@ -71,8 +71,47 @@ provider tests, UI work, and core/platform changes.
 - `.gitmodules` 的 `branch = FlClash`、`setup.dart:167` 的 `--git-ref FlClash`
   —— 均为上游仓库里的真实分支名，改了会拉不到代码。
 - `origin`/`upstream` 两个 remote 仍指向 `chen08209/FlClash`，用于同步上游更新。
-- `README.md`、`.github/` 模板、`release_telegram.py` 中的上游徽章与发布链接
-  —— 属于上游发布流程，本 fork 未使用；若将来自建发布流程再一并处理。
+- `README.md`、`README_zh_CN.md` 顶部保留 `chen08209/FlClash` 链接 —— 这是分支来源署名致谢，
+  刻意保留，不要清。
+- 各处**小写** `flclash` URL 协议名（`AndroidManifest.xml`、`lib/common/window.dart`、
+  `macos/Runner/Info.plist`、`test/common/protocol_test.dart`）—— 保留是为了老订阅链接仍能
+  一键导入；旁边都已并列加上 `clashmo`。删掉会让旧链接失效。
+
+### 改名收尾（2026-09-07 第三轮，25 个文件）
+
+前两轮漏掉的文字描述、文档与发布流程，本轮清完。留下的旧名见上一节，均为刻意保留。
+
+- **修复真实故障 1**：两份 README 里给用户抄的安卓广播指令还是
+  `com.follow.clash.action.START/STOP/TOGGLE`，而代码里 `applicationId` 早已是
+  `com.clashmo.android`（`android/app/build.gradle.kts:39`，广播名由 `${applicationId}` 拼出）。
+  照文档抄的指令**根本不生效**。已改为 `com.clashmo.android.action.*`。
+- **修复真实故障 2**：URL 协议注册三处不一致 —— 安卓已加 `clashmo`，但 Windows
+  （`lib/common/window.dart`）和 macOS（`Info.plist`）只注册了 `clash/clashmeta/flclash`。
+  桌面端点 `clashmo://` 链接不会被接管。已补齐。
+- **拆掉指向原作者的发布链条**（`.github/workflows/build.yaml`）：打 `v*` 标签会真的触发这个
+  工作流，而其中三步是往**原作者的**仓库/频道推送 —— Homebrew tap、F-Droid 仓库、
+  Telegram 频道 `@FlClash`。我们没有对应密钥，只会失败；且 Homebrew 那步按
+  `FlClash-*.dmg` 找文件，改名后必然报错中断发布。已删除这三步与 telegram-bot-api 服务容器，
+  并删掉只服务于它们的 `.github/homebrew_cask_template.rb`、`release_telegram.py`。
+  保留的 GitHub Release 发布步骤改用 `${{ github.repository }}` 自取仓库名。
+- 文档与描述：`.agents/` 六处、插件 podspec/pubspec 描述与作者字段、build_tool 命令描述、
+  `plugins/wifi_ssid/LICENSE` 版权名、`.gitignore` 注释。
+- README 两份：标题、License 徽章指向本仓库；删除原作者的下载徽章、Homebrew 安装说明、
+  star-history 图（都指向上游，对本 fork 无意义）；下载改指本仓库 Releases。
+- `.github/release_template.md` 下载链接与产物名、`.github/ISSUE_TEMPLATE/` 两份的 issue 链接。
+- macOS 测试 bundle id `com.follow.flClash.RunnerTests` → `com.clashmo.RunnerTests`。
+- **已验证**（`temp/verify_rename.ps1`）：`flutter analyze lib test` 退出码 0，
+  `flutter test` 417 项全通过、退出码 0。
+
+### 尚未改名的标识符（本轮刻意没动，将来要动需谨慎）
+
+`com.follow.clash` 这个应用标识符仍在用：`macos/Runner/Configs/AppInfo.xcconfig`、
+`macos/Runner.xcodeproj/project.pbxproj`（debug 变体）、`linux/CMakeLists.txt` 的
+`APPLICATION_ID`、`plugins/setup/android/` 的 gradle group 与 namespace。
+**没改的原因**：改 bundle id / APPLICATION_ID 会让已安装的桌面版被当成另一个应用
+——配置目录、偏好设置、已授权的系统权限全部丢失，等于用户数据被清空。
+安卓侧的 `applicationId` 已是 `com.clashmo.android`（安卓可接受，因为本 fork 尚未分发过）。
+将来若要统一，必须先设计配置目录迁移方案，不能直接改字符串。
 
 ## 踩坑记录
 
@@ -111,6 +150,12 @@ provider tests, UI work, and core/platform changes.
 - 2026-09-07：跑 `flutter test` 会顺带升级 `pubspec.lock` 里几个小版本依赖
   （intl、matcher、meta、test、vector_math 等）。提交改名类变更前先
   `git checkout -- pubspec.lock`，避免把无关的依赖升级混进业务提交。
+- 2026-09-07：改名任务里**文档也是产品的一部分**。README 给用户抄的安卓广播指令用的是旧
+  `applicationId`，改名后指令静默失效——没有任何报错，用户只会以为"这功能坏了"。
+  凡是文档里出现的**可执行内容**（命令、包名、协议链接、路径），改名后都要回代码核对一遍。
+- 2026-09-07：fork 仓库要检查 `.github/workflows/` 里有没有**推向原作者仓库**的步骤。
+  本项目 `build.yaml` 由 `v*` 标签触发，其中三步往 chen08209 的 Homebrew tap、F-Droid 仓库
+  和 Telegram 频道推送。fork 没有对应 secrets，打标签发版时会失败中断。已删除。
 - 2026-09-07：Claude 桌面版侧边栏项目名仍显示旧名「FlClash」。原因是目录曾由
   `F:\AI\FlClash` 改名为 `F:\AI\ClashMO`，而项目显示名在首次识别时被记录、未随目录更新。
   该名称不在本机配置文件内（`~/.claude.json`、`~/.claude/`、桌面版 AppData 均搜索无果），
