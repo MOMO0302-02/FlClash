@@ -379,7 +379,13 @@ class CommonCard extends StatelessWidget {
                 (states) => _buildBorderSide(context, states),
               ),
             ),
-        onPressed: onPressed,
+        // ✅ 优化：按压时触发触觉反馈
+        onPressed: onPressed != null
+            ? () {
+                HapticFeedback.lightImpact();
+                onPressed!();
+              }
+            : null,
         child: childWidget,
       ),
       false => OutlinedButton(
@@ -405,7 +411,13 @@ class CommonCard extends StatelessWidget {
                 (states) => _buildBorderSide(context, states),
               ),
             ),
-        onPressed: onPressed,
+        // ✅ 优化：按压时触发触觉反馈
+        onPressed: onPressed != null
+            ? () {
+                HapticFeedback.lightImpact();
+                onPressed!();
+              }
+            : null,
         child: childWidget,
       ),
     };

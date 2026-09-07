@@ -1,0 +1,9 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "app_icon",
+      "url": "file:///F:/AI/ClashMO/assets/images/app_icon.svg"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import 'package:flutter_svg/svg.dart';
 /// 除了图和一行标题，还可以给一句说明和一个下一步动作——空状态是「邀请用户做
 /// 下一件事」的地方，只写「暂无数据」等于把人晾在那儿。
 /// [description] 与 [action] 都是可选的，老的调用点不用改。
-class NullStatus extends StatelessWidget {
+class NullStatus extends StatefulWidget {
   final String label;
   final String? description;
   final Widget? action;
@@ -23,6 +23,34 @@ class NullStatus extends StatelessWidget {
   });
 
   @override
+  State<NullStatus> createState() => _NullStatusState();
+}
+
+class _NullStatusState extends State<NullStatus>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ 优化：添加微动画，插图轻微上下浮动
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: -4.0, end: 4.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Align(
@@ -33,20 +61,28 @@ class NullStatus extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            illustration,
+            // ✅ 微动画包装插图
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) => Transform.translate(
+                offset: Offset(0, _animation.value),
+                child: child,
+              ),
+              child: widget.illustration,
+            ),
             const SizedBox(height: 16),
-            Text(label, style: textTheme.titleMedium?.toBold.toLight),
-            if (description != null) ...[
+            Text(widget.label, style: textTheme.titleMedium?.toBold.toLight),
+            if (widget.description != null) ...[
               const SizedBox(height: 6),
               Text(
-                description!,
+                widget.description!,
                 textAlign: TextAlign.center,
                 style: textTheme.bodySmall?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
-            if (action != null) ...[const SizedBox(height: 20), action!],
+            if (widget.action != null) ...[const SizedBox(height: 20), widget.action!],
           ],
         ),
       ),

@@ -62,20 +62,61 @@ class _ProfilesViewState extends State<ProfilesView> {
       return;
     }
     _isUpdating = true;
+
+    // ✅ 优化：显示进度对话框
+    final progressNotifier = ValueNotifier<double>(0.0);
+    final completedNotifier = ValueNotifier<int>(0);
+    final totalProfiles = profiles.where((p) => p.type != ProfileType.file).length;
+
+    if (totalProfiles > 1 && mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => ValueListenableBuilder(
+          valueListenable: progressNotifier,
+          builder: (_, progress, __) => ValueListenableBuilder(
+            valueListenable: completedNotifier,
+            builder: (_, completed, __) => AlertDialog(
+              title: Text(context.appLocalizations.update),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LinearProgressIndicator(value: progress),
+                  const SizedBox(height: 16),
+                  Text('$completed / $totalProfiles'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final List<UpdatingMessage> messages = [];
+    int completed = 0;
     final updateProfiles = profiles.map<Future>((profile) async {
       if (profile.type == ProfileType.file) return;
       try {
         await globalState.container
             .read(profilesActionProvider.notifier)
-            .updateProfile(profile, showLoading: true);
+            .updateProfile(profile, showLoading: totalProfiles == 1);
       } catch (e) {
         messages.add(
           UpdatingMessage(label: profile.realLabel, message: e.toString()),
         );
+      } finally {
+        completed++;
+        completedNotifier.value = completed;
+        progressNotifier.value = completed / totalProfiles;
       }
     });
     await Future.wait(updateProfiles);
+
+    // 关闭进度对话框
+    if (totalProfiles > 1 && mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
     if (messages.isNotEmpty) {
       globalState.showAllUpdatingMessagesDialog(messages);
     }

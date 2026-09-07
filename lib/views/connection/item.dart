@@ -105,6 +105,14 @@ class TrackerInfoItem extends ConsumerWidget {
     required this.detailTitle,
   });
 
+  /// 连接项是否"静态"（不需要每秒更新的部分）。
+  /// 静态部分：进程名、目标地址、协议、代理链
+  /// 动态部分：流量统计、实时速度
+  bool _isStatic(int uploadSpeed, int downloadSpeed) {
+    // 如果有实时速度，说明是动态的
+    return uploadSpeed == 0 && downloadSpeed == 0;
+  }
+
   static double get subTitleHeight {
     return globalState.measure.bodySmallHeight + 20;
   }
@@ -175,6 +183,15 @@ class TrackerInfoItem extends ConsumerWidget {
       ),
     );
     final pills = _buildPills(context);
+
+    // ✅ 性能优化：使用RepaintBoundary隔离重绘
+    // 连接页每秒刷新，RepaintBoundary可以避免整个卡片重绘
+    return RepaintBoundary(
+      child: _buildContent(context, ref, value, pills),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, WidgetRef ref, bool value, List<Widget> pills) {
     // 用 LayoutBuilder 是为了给时间一个**按比例**的宽度上限。
     //
     // 时间这一项没有 flex，Row 会先按它的自然宽度排；而它是本地化的相对时间，

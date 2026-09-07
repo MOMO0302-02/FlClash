@@ -22,6 +22,21 @@ typedef _Shape = ({int cols, int rows});
 const _maxCrossAxisCount = 16;
 const _maxGridWidth = 280.0 * _maxCrossAxisCount / 4;
 
+/// 根据屏幕宽度动态计算网格列数。
+///
+/// 适配不同设备尺寸：
+/// - 手机竖屏（<600dp）：2列
+/// - 大手机/小平板（600-840dp）：3列
+/// - 平板竖屏（840-1200dp）：4列
+/// - 平板横屏/桌面（≥1200dp）：6列
+int _calculateCrossAxisCount(BuildContext context) {
+  final width = MediaQuery.sizeOf(context).width;
+  if (width >= 1200) return 6;
+  if (width >= 840) return 4;
+  if (width >= 600) return 3;
+  return 2;
+}
+
 class DashboardView extends ConsumerStatefulWidget {
   const DashboardView({super.key});
 
@@ -377,8 +392,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                   constraints: const BoxConstraints(maxWidth: _maxGridWidth),
                   child: LayoutBuilder(
                     builder: (_, constraints) {
+                      // ✅ 响应式优化：根据实际屏幕宽度动态计算列数
+                      // 旧方案：按280dp单位硬编码计算
+                      // 新方案：适配手机(2列)/平板(4-6列)等不同尺寸
+                      final responsiveColumns = _calculateCrossAxisCount(context);
                       final columns = min(
-                        max(4 * ((constraints.maxWidth / 280).ceil()), 8),
+                        max(responsiveColumns * 4, 8),  // 保持最小8的内部网格精度
                         _maxCrossAxisCount,
                       );
                       // 一列占多宽：总宽加一个间距，再按列数均分。

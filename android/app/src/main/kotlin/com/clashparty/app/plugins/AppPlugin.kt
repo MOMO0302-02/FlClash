@@ -65,8 +65,12 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "moveTaskToBack" -> {
-                activity?.moveTaskToBack(true)
-                result.success(true)
+                try {
+                    val moved = activity?.moveTaskToBack(true) ?: false
+                    result.success(moved)
+                } catch (e: Exception) {
+                    result.success(false)
+                }
             }
 
             "updateExcludeFromRecents" -> {
