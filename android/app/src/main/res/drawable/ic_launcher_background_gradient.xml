@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  启动图标背景：紫红渐变
+  启动图标背景：纯色占位
 
-  Clash Party Mobile 的品牌配色：
-  - 起始色：#8B5CF6（紫色）
-  - 结束色：#EC4899（粉红色）
-  - 渐变角度：135度（左上到右下）
-
-  与 ic_mark.xml 中的渐变保持一致。
+  实际图标使用 mipmap-*/ic_launcher.png 位图文件
+  这个文件仅用于不支持位图的场景
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient
-        android:type="linear"
-        android:angle="135"
-        android:startColor="#8B5CF6"
-        android:endColor="#EC4899" />
+    <solid android:color="#8B5CF6" />
 </shape>

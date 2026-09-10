@@ -9,7 +9,7 @@ import 'package:clash_party/enum/enum.dart';
 import 'package:clash_party/models/models.dart';
 import 'package:flutter/material.dart';
 
-const appName = 'Clash MO';
+const appName = 'ClashMO';
 const appHelperService = 'ClashPartyHelperService';
 const coreManifestName = 'manifest.json';
 const coreName = 'clash.meta';
@@ -78,7 +78,7 @@ const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
 const double dialogCommonWidth = 300;
-const repository = 'chen08209/ClashParty';
+const repository = 'MOMO0302-02/ClashMO';
 const defaultExternalController = '127.0.0.1:9090';
 
 /// Smart 模型自动更新的间隔，单位小时。内核默认就是 72

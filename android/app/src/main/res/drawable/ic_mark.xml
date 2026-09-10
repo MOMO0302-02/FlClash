@@ -3,33 +3,19 @@
   应用标记：Clash Party 的主图标。
 
   设计说明：
-  - 紫红色渐变背景（从紫色到粉红色）
-  - 白色猫头剪影（简洁造型，圆形头部 + 两个三角耳朵）
-  - 108dp 画布，72dp 安全区域内绘制主要内容
-  - 适配 Android 自适应图标（圆形、方形、圆角方形等）
+  - 使用 AI 生成的位图图标
+  - 这个文件仅作为占位，实际图标使用 mipmap-*/ic_launcher.png
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 渐变背景：紫红渐变 -->
+    <!-- 纯色背景占位 -->
     <path
         android:fillColor="#8B5CF6"
-        android:pathData="M 0,0 L 108,0 L 108,108 L 0,108 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="0"
-                android:startY="0"
-                android:endX="108"
-                android:endY="108"
-                android:startColor="#8B5CF6"
-                android:endColor="#EC4899" />
-        </aapt:attr>
-    </path>
+        android:pathData="M 0,0 L 108,0 L 108,108 L 0,108 Z" />
 
     <!-- 白色猫头剪影 -->
     <path

@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName
 data class SharedState(
     val startTip: String = "Starting VPN...",
     val stopTip: String = "Stopping VPN...",
-    val currentProfileName: String = "Clash Party",
+    val currentProfileName: String = "ClashMO",
     val stopText: String = "Stop",
     val onlyStatisticsProxy: Boolean = false,
     // 通知栏要不要显示实时速率。默认显示，保持和以前一致。

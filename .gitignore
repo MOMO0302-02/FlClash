@@ -89,3 +89,11 @@ devtools_options.yaml
 
 # Java heap dumps
 *.hprof
+
+# 本地工作记录，不公开
+/00_项目状态.md
+/交接给-OpenCode.md
+/签名说明.md
+
+# Smart kernel stays on this machine, not on GitHub
+/core/Clash.Meta-smart/
